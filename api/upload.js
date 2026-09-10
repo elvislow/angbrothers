@@ -4,7 +4,7 @@ export const config = { api: { bodyParser: { sizeLimit: '15mb' } } };
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ error: 'Connect a Vercel Blob store to enable uploads.' });
+  // OIDC authentication is injected by Vercel.
   try {
     const { name, type, data } = req.body || {};
     if (!name || !data) return res.status(400).json({ error: 'No file provided.' });
