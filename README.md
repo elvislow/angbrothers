@@ -12,6 +12,6 @@ Click any calendar item to edit its title, type, date, time, or channel. Use the
 
 ## Enable shared schedules and script uploads
 
-In the Vercel project, open **Storage**, create a **Blob** store, and connect it to this project. Vercel will add `BLOB_READ_WRITE_TOKEN` automatically. Redeploy once after connecting it.
+In the Vercel project, open **Storage**, create a **Blob** store, and connect it to this project. Vercel will add `OIDC credentialsNew Vercel projects authenticate Blob through short-lived OIDC credentials automatically. Redeploy once after connecting it. Without Blob connected, shared editing and script uploads remain disabled.` automatically. Redeploy once after connecting it.
 
 Without Blob connected, visitors can view the included sample schedule, but adding schedules and uploading scripts remain disabled.
