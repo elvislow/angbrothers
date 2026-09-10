@@ -8,7 +8,7 @@
 
 The calendar is publicly viewable immediately.
 
-Click any calendar item to edit its title, type, date, time, or channel. Changes are shared after Blob storage is connected.
+Click any calendar item to edit its title, type, date, time, or channel. Use the month arrows and Today button to navigate. Uploaded scripts appear in the Scripts list; click any script to edit its title, owner, shoot date, or status. Changes are shared after Blob storage is connected.
 
 ## Enable shared schedules and script uploads
 

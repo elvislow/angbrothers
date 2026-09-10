@@ -11,3 +11,44 @@
   transform: translateY(-1px);
   box-shadow: 0 3px 10px rgb(0 0 0 / 8%);
 }
+
+.arrows {
+  display: flex;
+  gap: 6px;
+}
+
+.script-row {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: #fff;
+  color: var(--ink);
+  text-align: left;
+}
+
+.script-row:first-child {
+  border-top: 0;
+}
+
+.script-row:hover {
+  background: #faf9f7;
+}
+
+.empty {
+  padding: 34px 20px;
+  color: var(--muted);
+  text-align: center;
+}
+
+#scriptFileLink {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--red);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+#scriptFileLink[hidden] {
+  display: none;
+}
