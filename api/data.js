@@ -1,4 +1,4 @@
-import { list, put } from '@vercel/blob';
+import { del, list, put } from '@vercel/blob';
 
 const seed = {
   entries: [],
@@ -6,7 +6,6 @@ const seed = {
 };
 
 async function readData() {
-  // OIDC authentication is injected by Vercel.
   const found = await list({ prefix: 'content-calendar/data.json', limit: 1 });
   if (!found.blobs.length) {
     await writeData(seed);
@@ -28,24 +27,43 @@ async function writeData(data) {
 export default async function handler(req, res) {
   try {
     if (req.method === 'GET') return res.status(200).json(await readData());
-    if (!['POST', 'PUT'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
-    // OIDC authentication is injected by Vercel.
-
+    if (!['POST', 'PUT', 'DELETE'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
     const data = await readData();
     const body = req.body || {};
 
+    if (req.method === 'DELETE') {
+      if (!body.id) return res.status(400).json({ error: 'Missing item ID.' });
+
+      if (body.resource === 'script') {
+        const index = data.scripts.findIndex(item => String(item.id) === String(body.id));
+        if (index < 0) return res.status(404).json({ error: 'Script not found.' });
+        const [removed] = data.scripts.splice(index, 1);
+        await writeData(data);
+        if (removed.fileUrl) {
+          try { await del(removed.fileUrl); } catch { /* Keep the record deleted if file cleanup fails. */ }
+        }
+        return res.status(200).json({ id: removed.id, resource: 'script' });
+      }
+
+      const index = data.entries.findIndex(item => String(item.id) === String(body.id));
+      if (index < 0) return res.status(404).json({ error: 'Schedule not found.' });
+      const [removed] = data.entries.splice(index, 1);
+      await writeData(data);
+      return res.status(200).json({ id: removed.id, resource: 'schedule' });
+    }
+
     if (body.resource === 'script') {
-      if (!body.title?.trim() || !body.date || !['Draft', 'In Review', 'Approved', 'Scheduled', 'Completed'].includes(body.status)) {
+      if (!body.title?.trim() || !body.content?.trim() || !body.date || !['Draft', 'In Review', 'Approved', 'Scheduled', 'Completed'].includes(body.status)) {
         return res.status(400).json({ error: 'Complete all required script fields.' });
       }
       let script;
       if (req.method === 'PUT') {
         const index = data.scripts.findIndex(item => String(item.id) === String(body.id));
         if (index < 0) return res.status(404).json({ error: 'Script not found.' });
-        script = { ...data.scripts[index], title: body.title.trim(), owner: body.owner?.trim() || 'Unassigned', date: body.date, status: body.status };
+        script = { ...data.scripts[index], title: body.title.trim(), content: body.content.trim(), owner: body.owner?.trim() || 'Unassigned', date: body.date, status: body.status };
         data.scripts[index] = script;
       } else {
-        script = { id: Date.now(), title: body.title.trim(), owner: body.owner?.trim() || 'Unassigned', date: body.date, status: body.status, fileName: body.fileName || '', fileUrl: body.fileUrl || '' };
+        script = { id: Date.now(), title: body.title.trim(), content: body.content.trim(), owner: body.owner?.trim() || 'Unassigned', date: body.date, status: body.status };
         data.scripts.push(script);
       }
       await writeData(data);
