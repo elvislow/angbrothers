@@ -1,0 +1,13 @@
+.event {
+  display: block;
+  width: 100%;
+  border-width: 0 0 0 3px;
+  border-style: solid;
+  text-align: left;
+  transition: transform 150ms ease, box-shadow 150ms ease;
+}
+
+.event:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgb(0 0 0 / 8%);
+}

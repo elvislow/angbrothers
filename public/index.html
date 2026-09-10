@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en-SG">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ang Brothers Content Workspace</title><meta name="description" content="Plan shoots, posts and scripts for Ang Brothers Funeral Services.">
+  <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/editing.css">
+</head>
+<body>
+  <header><img src="/ang-brothers-logo.png" alt="Ang Brothers Funeral Services"><span class="divider"></span><b>Content Workspace</b><span class="avatar">AB</span></header>
+  <div class="shell">
+    <aside><nav><a class="active">▣ Content Calendar</a><a href="#scripts">▤ Script Library</a><a>▦ Content Overview</a></nav><section><small>MONTHLY PROGRESS</small><p><span>Completed</span><strong>0</strong></p><div class="progress"><i style="width:0"></i></div><p class="muted"><span>Planned content</span><span>0</span></p></section><a class="settings">⚙ Settings</a></aside>
+    <main>
+      <div class="intro"><div><em>ANG BROTHERS · SOCIAL</em><h1>Content Calendar</h1><p>Plan every shoot and publish every story on time.</p></div><div class="actions"><button class="secondary" id="uploadBtn">⇧ Upload Script</button><button id="addBtn">＋ Add Schedule</button></div></div>
+      <div id="notice" class="notice" hidden></div>
+      <section class="calendar"><div class="cal-head"><div class="arrows">‹　›</div><h2>September 2026</h2><div class="legend"><span><i class="red"></i>Shoot</span><span><i class="black"></i>Post</span><button class="secondary small">Today</button></div></div><div class="weekdays" id="weekdays"></div><div class="days" id="days"></div></section>
+      <section class="scripts" id="scripts"><div class="section-title"><div><h2>Recent Scripts</h2><p>Manage ideas, approvals and shoots in one place.</p></div><a>View All ›</a></div><div class="script-list" id="scriptList"></div></section>
+    </main>
+  </div>
+  <dialog id="scheduleDialog"><form id="scheduleForm"><button class="close" type="button">×</button><h2 id="scheduleTitle">Add Content Schedule</h2><p id="scheduleDescription">Schedule a shoot or social media post.</p><input name="id" type="hidden"><label>Content title<input name="title" required placeholder="e.g. Common Questions About Farewell Services"></label><div class="two"><label>Type<select name="type"><option value="shoot">Shoot</option><option value="post">Publish post</option></select></label><label>Date<input name="date" type="date" value="2026-09-18" required></label></div><div class="two"><label>Time<input name="time" type="time" value="10:00" required></label><label>Channel<input name="channel" placeholder="IG · FB · TikTok"></label></div><div class="dialog-actions"><button type="button" class="secondary cancel">Cancel</button><button id="scheduleSubmit" type="submit">Add to Calendar</button></div></form></dialog>
+  <dialog id="uploadDialog"><form id="uploadForm"><button class="close" type="button">×</button><h2>Upload Shoot Script</h2><p>Upload a PDF, Word or text file up to 10MB.</p><label class="drop">⇧<strong>Choose a script file</strong><small>PDF · DOCX · TXT</small><input name="file" type="file" accept=".pdf,.doc,.docx,.txt" required></label><div class="dialog-actions"><button type="button" class="secondary cancel">Cancel</button><button type="submit">Upload Script</button></div></form></dialog>
+  <script src="/app.js"></script>
+</body></html>
