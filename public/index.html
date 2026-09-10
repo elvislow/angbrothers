@@ -1,24 +1,62 @@
 <!doctype html>
 <html lang="en-SG">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Ang Brothers Content Workspace</title><meta name="description" content="Plan shoots, posts and scripts for Ang Brothers Funeral Services.">
-  <link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/editing.css">
-  <style>textarea{min-height:190px;border:1px solid var(--line);border-radius:8px;padding:10px;font:inherit;line-height:1.55;resize:vertical}.danger{margin-right:auto;color:var(--red);border-color:#edc2c2}</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ang Brothers Content Workspace</title>
+  <meta name="description" content="Plan scripts, shoots and social posts for Ang Brothers Funeral Services.">
+  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/editing.css">
 </head>
 <body>
   <header><img src="/ang-brothers-logo.png" alt="Ang Brothers Funeral Services"><span class="divider"></span><b>Content Workspace</b><span class="avatar">AB</span></header>
   <div class="shell">
-    <aside><nav><a class="active" href="#calendar">&#9635; Content Calendar</a><a href="#scripts">&#9636; Script Library</a></nav><section><small>MONTHLY PROGRESS</small><p><span>Completed</span><strong id="completedCount">0</strong></p><div class="progress"><i id="progressBar" style="width:0"></i></div><p class="muted"><span>Planned content</span><span id="plannedCount">0</span></p></section></aside>
+    <aside>
+      <nav><a class="active" href="#calendar">&#9635; Content Calendar</a><a href="#library">&#9636; Content Library</a></nav>
+      <section><small>MONTHLY PROGRESS</small><p><span>Completed</span><strong id="completedCount">0</strong></p><div class="progress"><i id="progressBar" style="width:0"></i></div><p class="muted"><span>Planned milestones</span><span id="plannedCount">0</span></p></section>
+    </aside>
     <main>
-      <div class="intro"><div><em>ANG BROTHERS &middot; SOCIAL</em><h1>Content Calendar</h1><p>Plan every shoot and publish every story on time.</p></div><div class="actions"><button class="secondary" id="uploadBtn">+ New Script</button><button id="addBtn">+ Add Schedule</button></div></div>
+      <div class="intro"><div><em>ANG BROTHERS &middot; SOCIAL</em><h1>Content Calendar</h1><p>Manage each script, shoot and post as one connected content plan.</p></div><div class="actions"><button id="addBtn">+ New Content</button></div></div>
       <div id="notice" class="notice" hidden></div>
-      <section class="calendar" id="calendar"><div class="cal-head"><div class="arrows"><button class="secondary small" id="prevMonth" aria-label="Previous month">&lsaquo;</button><button class="secondary small" id="nextMonth" aria-label="Next month">&rsaquo;</button></div><h2 id="monthLabel">September 2026</h2><div class="legend"><span><i class="red"></i>Shoot</span><span><i class="black"></i>Post</span><button class="secondary small" id="todayBtn">Today</button></div></div><div class="weekdays" id="weekdays"></div><div class="days" id="days"></div></section>
-      <section class="scripts" id="scripts"><div class="section-title"><div><h2>Scripts</h2><p>Write, review and update every script in one place.</p></div><button class="secondary" id="uploadListBtn">+ New Script</button></div><div class="script-list" id="scriptList"></div></section>
+
+      <section class="filters" aria-label="Search and filters">
+        <label class="search-field"><span>Search</span><input id="searchInput" type="search" placeholder="Title, script or owner"></label>
+        <label><span>Platform</span><select id="platformFilter"><option value="">All platforms</option><option>Instagram</option><option>Facebook</option><option>TikTok</option><option>YouTube</option><option>Other</option></select></label>
+        <label><span>Calendar</span><select id="typeFilter"><option value="">Shoot &amp; Post</option><option value="shoot">Shoot only</option><option value="post">Post only</option></select></label>
+        <label><span>Status</span><select id="statusFilter"><option value="">All statuses</option><option value="open">In progress</option><option value="completed">Completed</option></select></label>
+        <button class="secondary clear-filters" id="clearFilters" type="button">Clear</button>
+      </section>
+
+      <section class="calendar" id="calendar">
+        <div class="cal-head"><div class="arrows"><button class="secondary small" id="prevMonth" aria-label="Previous month">&lsaquo;</button><button class="secondary small" id="nextMonth" aria-label="Next month">&rsaquo;</button></div><h2 id="monthLabel"></h2><div class="legend"><span><i class="red"></i>Shoot</span><span><i class="black"></i>Post</span><button class="secondary small" id="todayBtn">Today</button></div></div>
+        <div class="weekdays" id="weekdays"></div><div class="days" id="days"></div>
+      </section>
+
+      <section class="scripts" id="library">
+        <div class="section-title"><div><h2>Content Library</h2><p>Scripts, production dates and publishing progress in one place.</p></div><button class="secondary" id="addListBtn">+ New Content</button></div>
+        <div class="library-head"><span>Content</span><span>Platforms</span><span>Shoot</span><span>Post</span><span>Progress</span></div>
+        <div class="script-list" id="contentList"></div>
+      </section>
     </main>
   </div>
-  <dialog id="scheduleDialog"><form id="scheduleForm"><button class="close" type="button">&times;</button><h2 id="scheduleTitle">Add Content Schedule</h2><p id="scheduleDescription">Schedule a shoot or social media post.</p><input name="id" type="hidden"><label>Content title<input name="title" required placeholder="e.g. Common Questions About Farewell Services"></label><div class="two"><label>Type<select name="type"><option value="shoot">Shoot</option><option value="post">Publish post</option></select></label><label>Date<input name="date" type="date" value="2026-09-18" required></label></div><div class="two"><label>Time<input name="time" type="time" value="10:00" required></label><label>Channel<input name="channel" placeholder="IG &middot; FB &middot; TikTok"></label></div><div class="dialog-actions"><button id="deleteSchedule" type="button" class="secondary danger" hidden>Delete Schedule</button><button type="button" class="secondary cancel">Cancel</button><button id="scheduleSubmit" type="submit">Add to Calendar</button></div></form></dialog>
-  <dialog id="uploadDialog"><form id="uploadForm"><button class="close" type="button">&times;</button><h2>New Script</h2><p>Write the complete shoot script and add its details.</p><label>Script title<input name="title" required placeholder="e.g. Common Questions About Farewell Services"></label><label>Script content<textarea name="content" rows="10" required placeholder="Write or paste the full script here..."></textarea></label><div class="two"><label>Owner<input name="owner" placeholder="Name"></label><label>Shoot date<input name="date" type="date" required></label></div><label>Status<select name="status"><option>Draft</option><option>In Review</option><option>Approved</option><option>Scheduled</option><option>Completed</option></select></label><div class="dialog-actions"><button type="button" class="secondary cancel">Cancel</button><button type="submit">Save Script</button></div></form></dialog>
-  <dialog id="scriptDialog"><form id="scriptForm"><button class="close" type="button">&times;</button><h2>Edit Script</h2><p>Update the script and production status.</p><input name="id" type="hidden"><label>Script title<input name="title" required></label><label>Script content<textarea name="content" rows="10" required></textarea></label><div class="two"><label>Owner<input name="owner" placeholder="Name"></label><label>Shoot date<input name="date" type="date" required></label></div><label>Status<select name="status"><option>Draft</option><option>In Review</option><option>Approved</option><option>Scheduled</option><option>Completed</option></select></label><div class="dialog-actions"><button id="deleteScript" type="button" class="secondary danger">Delete Script</button><button type="button" class="secondary cancel">Cancel</button><button type="submit">Save Changes</button></div></form></dialog>
+
+  <dialog id="contentDialog">
+    <form id="contentForm">
+      <button class="close" type="button" aria-label="Close">&times;</button>
+      <h2 id="contentDialogTitle">New Content</h2>
+      <p>Keep the script, shoot and post plan together.</p>
+      <input name="id" type="hidden">
+      <label>Content title<input name="title" required placeholder="e.g. What families should prepare"></label>
+      <label>Script<textarea name="script" rows="8" placeholder="Write or paste the complete script here..."></textarea></label>
+      <div class="two"><label>Owner<input name="owner" placeholder="Name"></label><fieldset><legend>Platforms</legend><div class="platform-options"><label><input type="checkbox" name="platforms" value="Instagram">Instagram</label><label><input type="checkbox" name="platforms" value="Facebook">Facebook</label><label><input type="checkbox" name="platforms" value="TikTok">TikTok</label><label><input type="checkbox" name="platforms" value="YouTube">YouTube</label><label><input type="checkbox" name="platforms" value="Other">Other</label></div></fieldset></div>
+
+      <section class="workflow-block shoot-block"><div class="workflow-heading"><strong>Shoot</strong><span>Production schedule</span></div><div class="three"><label>Date<input name="shootDate" type="date"></label><label>Time<input name="shootTime" type="time" value="10:00"></label><label>Status<select name="shootStatus"><option>Not Scheduled</option><option>Planned</option><option>Completed</option></select></label></div></section>
+      <section class="workflow-block post-block"><div class="workflow-heading"><strong>Post</strong><span>Publishing schedule</span></div><div class="three"><label>Date<input name="postDate" type="date"></label><label>Time<input name="postTime" type="time" value="10:00"></label><label>Status<select name="postStatus"><option>Not Scheduled</option><option>Planned</option><option>Scheduled</option><option>Published</option></select></label></div></section>
+      <label>Script status<select name="scriptStatus"><option>Not Started</option><option>Draft</option><option>In Review</option><option>Approved</option></select></label>
+
+      <div class="dialog-actions"><button id="deleteContent" type="button" class="secondary danger" hidden>Delete Content</button><button type="button" class="secondary cancel">Cancel</button><button id="contentSubmit" type="submit">Save Content</button></div>
+    </form>
+  </dialog>
   <script src="/app.js"></script>
-</body></html>
+</body>
+</html>
