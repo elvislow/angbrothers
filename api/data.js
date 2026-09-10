@@ -6,7 +6,7 @@ const seed = {
 };
 
 async function readData() {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return structuredClone(seed);
+  // OIDC authentication is injected by Vercel.
   const found = await list({ prefix: 'content-calendar/data.json', limit: 1 });
   if (!found.blobs.length) {
     await writeData(seed);
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') return res.status(200).json(await readData());
     if (!['POST', 'PUT'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
-    if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ error: 'Connect a Vercel Blob store to enable shared editing.' });
+    // OIDC authentication is injected by Vercel.
 
     const data = await readData();
     const body = req.body || {};
