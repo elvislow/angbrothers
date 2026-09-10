@@ -35,7 +35,7 @@ function render() {
   $('#weekdays').innerHTML = weekdays.map(day => `<div>${day}</div>`).join('');
   $('#days').innerHTML = calendarCells(year, month).map(cell => {
     const events = data.entries.filter(entry => entry.date === cell.key);
-    return `<div class="day ${cell.muted ? 'muted' : ''}"><span class="num">${cell.date.getDate()}</span>${events.map(entry => `<button class="event ${entry.type}" data-entry-id="${entry.id}" title="Click to edit">${escapeHtml(entry.title)}<small>${entry.time}${entry.channel ? ` · ${escapeHtml(entry.channel)}` : ''}</small></button>`).join('')}</div>`;
+    return `<div class="day ${cell.muted ? 'muted' : ''}"><span class="num">${cell.date.getDate()}</span>${events.map(entry => `<button class="event ${entry.type}" data-entry-id="${entry.id}" title="Click to edit">${escapeHtml(entry.title)}<small>${entry.time}${entry.channel ? ` Â· ${escapeHtml(entry.channel)}` : ''}</small></button>`).join('')}</div>`;
   }).join('');
 
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
@@ -46,7 +46,7 @@ function render() {
   $('#completedCount').textContent = completed;
   $('#progressBar').style.width = `${monthEntries.length ? Math.round(completed / monthEntries.length * 100) : 0}%`;
 
-  $('#scriptList').innerHTML = data.scripts.length ? data.scripts.map(script => `<button class="row script-row" data-script-id="${script.id}" title="Click to edit"><strong>▤　${escapeHtml(script.title)}<small>${script.fileName ? escapeHtml(script.fileName) : 'Script details'}</small></strong><span>${escapeHtml(script.owner || 'Unassigned')}</span><span>${friendlyDate(script.date)}</span><i class="status ${statusClass(script.status)}">${escapeHtml(script.status)}</i></button>`).join('') : '<div class="empty">No scripts yet. Upload your first script to get started.</div>';
+  $('#scriptList').innerHTML = data.scripts.length ? data.scripts.map(script => `<button class="row script-row" data-script-id="${script.id}" title="Click to edit"><strong>â¤ã${escapeHtml(script.title)}<small>${escapeHtml((script.content || 'No script text yet').slice(0, 90))}</small></strong><span>${escapeHtml(script.owner || 'Unassigned')}</span><span>${friendlyDate(script.date)}</span><i class="status ${statusClass(script.status)}">${escapeHtml(script.status)}</i></button>`).join('') : '<div class="empty">No scripts yet. Add your first script to get started.</div>';
 }
 
 async function load() {
@@ -75,6 +75,7 @@ function openScheduleCreate() {
   $('#scheduleTitle').textContent = 'Add Content Schedule';
   $('#scheduleDescription').textContent = 'Schedule a shoot or social media post.';
   $('#scheduleSubmit').textContent = 'Add to Calendar';
+  $('#deleteSchedule').hidden = true;
   schedule.showModal();
 }
 
@@ -90,6 +91,7 @@ function openScheduleEdit(id) {
   $('#scheduleTitle').textContent = 'Edit Schedule';
   $('#scheduleDescription').textContent = 'Update this shoot or social media post.';
   $('#scheduleSubmit').textContent = 'Save Changes';
+  $('#deleteSchedule').hidden = false;
   schedule.showModal();
 }
 
@@ -98,12 +100,10 @@ function openScriptEdit(id) {
   if (!script) return;
   scriptForm.elements.id.value = script.id;
   scriptForm.elements.title.value = script.title;
+  scriptForm.elements.content.value = script.content || '';
   scriptForm.elements.owner.value = script.owner || '';
   scriptForm.elements.date.value = script.date || '';
   scriptForm.elements.status.value = script.status;
-  const link = $('#scriptFileLink');
-  link.hidden = !script.fileUrl;
-  link.href = script.fileUrl || '#';
   scriptDialog.showModal();
 }
 
@@ -122,7 +122,25 @@ $('#todayBtn').onclick = () => { viewDate = new Date(); render(); };
 $('#days').onclick = event => { const card = event.target.closest('[data-entry-id]'); if (card) openScheduleEdit(card.dataset.entryId); };
 $('#scriptList').onclick = event => { const row = event.target.closest('[data-script-id]'); if (row) openScriptEdit(row.dataset.scriptId); };
 document.querySelectorAll('.close,.cancel').forEach(button => { button.onclick = () => button.closest('dialog').close(); });
-uploadForm.elements.file.onchange = event => { if (!uploadForm.elements.title.value && event.target.files[0]) uploadForm.elements.title.value = event.target.files[0].name.replace(/\.[^.]+$/, ''); };
+async function deleteItem(resource, id) {
+  const label = resource === 'script' ? 'script' : 'schedule';
+  if (!confirm(`Delete this ${label}? This cannot be undone.`)) return;
+  const response = await fetch('/api/data', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ resource, id }) });
+  const result = await response.json();
+  if (!response.ok) return notice(result.error);
+  if (resource === 'script') {
+    data.scripts = data.scripts.filter(item => String(item.id) !== String(result.id));
+    scriptDialog.close();
+  } else {
+    data.entries = data.entries.filter(item => String(item.id) !== String(result.id));
+    schedule.close();
+  }
+  render();
+  notice(`${label[0].toUpperCase()}${label.slice(1)} deleted and shared.`);
+}
+
+$('#deleteSchedule').onclick = () => deleteItem('schedule', scheduleForm.elements.id.value);
+$('#deleteScript').onclick = () => deleteItem('script', scriptForm.elements.id.value);
 
 scheduleForm.onsubmit = async event => {
   event.preventDefault();
@@ -153,24 +171,14 @@ scriptForm.onsubmit = async event => {
 
 uploadForm.onsubmit = async event => {
   event.preventDefault();
-  const form = new FormData(event.target);
-  const file = form.get('file');
-  if (!file) return;
-  if (file.size > 10 * 1024 * 1024) return notice('File must be under 10MB.');
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  let binary = '';
-  for (let index = 0; index < bytes.length; index += 8192) binary += String.fromCharCode(...bytes.subarray(index, index + 8192));
-  const uploadResponse = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: file.name, type: file.type, data: btoa(binary) }) });
-  const uploaded = await uploadResponse.json();
-  if (!uploadResponse.ok) return notice(uploaded.error);
-  const body = { resource: 'script', title: form.get('title'), owner: form.get('owner'), date: form.get('date'), status: form.get('status'), fileName: file.name, fileUrl: uploaded.url };
+  const body = { ...Object.fromEntries(new FormData(event.target)), resource: 'script' };
   const response = await fetch('/api/data', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const result = await response.json();
   if (!response.ok) return notice(result.error);
   data.scripts.push(result);
   render();
   upload.close();
-  notice('Script uploaded and added to the editable list.');
+  notice('Script saved and shared.');
 };
 
 load();
