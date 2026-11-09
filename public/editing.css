@@ -96,3 +96,9 @@ legend { margin-bottom: 8px; font-weight: 700; }
   #contentDialog form { padding: 20px; }
   .dialog-actions { margin-left: -20px; margin-right: -20px; }
 }
+
+/* Status colours: scheduled posts = orange, drafts / in progress = red */
+.status.scheduled { background: #fdebd8; color: #b45309; }
+.status.draft { background: #fbe4e4; color: #b3191f; }
+.event.post.post-scheduled { background: #fdebd8; color: #9a4a06; border-color: #e07a1f; }
+.legend .orange { background: #e07a1f; }
