@@ -1,4 +1,4 @@
-import { list, put } from '@vercel/blob';
+import { del, list, put } from '@vercel/blob';
 
 const seed = { contents: [] };
 const allowedPlatforms = ['Instagram', 'Facebook', 'TikTok', 'YouTube', 'Other'];
@@ -73,23 +73,52 @@ function migrateData(raw = {}) {
   return { contents };
 }
 
+// Every save writes a NEW file (content-calendar/v-<time>.json) instead of overwriting one file.
+// Overwritten blobs stay cached on Vercel's CDN for a while, so the old version could be read back
+// and saved again, undoing edits and bringing deleted items back. New file names are never cached stale.
+const VERSION_PREFIX = 'content-calendar/v-';
+const KEEP_VERSIONS = 20;
+
+async function listVersions() {
+  const blobs = [];
+  let cursor;
+  do {
+    const page = await list({ prefix: VERSION_PREFIX, cursor, limit: 1000 });
+    blobs.push(...page.blobs);
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  return blobs.sort((a, b) => b.pathname.localeCompare(a.pathname));
+}
+
 async function readData() {
-  const found = await list({ prefix: 'content-calendar/data.json', limit: 1 });
-  if (!found.blobs.length) {
-    await writeData(seed);
-    return structuredClone(seed);
+  const versions = await listVersions();
+  if (versions.length) {
+    const response = await fetch(versions[0].url, { cache: 'no-store' });
+    return migrateData(await response.json());
   }
-  const response = await fetch(`${found.blobs[0].url}?v=${Date.now()}`, { cache: 'no-store' });
-  return migrateData(await response.json());
+  const legacy = await list({ prefix: 'content-calendar/data.json', limit: 1 });
+  if (legacy.blobs.length) {
+    const response = await fetch(`${legacy.blobs[0].url}?v=${Date.now()}`, { cache: 'no-store' });
+    const data = migrateData(await response.json());
+    await writeData(data);
+    return data;
+  }
+  await writeData(seed);
+  return structuredClone(seed);
 }
 
 async function writeData(data) {
-  return put('content-calendar/data.json', JSON.stringify(data), {
+  const stamp = String(Date.now()).padStart(15, '0');
+  const result = await put(`${VERSION_PREFIX}${stamp}.json`, JSON.stringify(data), {
     access: 'public',
     addRandomSuffix: false,
-    allowOverwrite: true,
     contentType: 'application/json'
   });
+  try {
+    const old = (await listVersions()).slice(KEEP_VERSIONS).map(blob => blob.url);
+    if (old.length) await del(old);
+  } catch {}
+  return result;
 }
 
 function contentFromBody(body, existing = {}) {
