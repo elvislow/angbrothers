@@ -78,12 +78,17 @@ function migrateData(raw = {}) {
 // and saved again, undoing edits and bringing deleted items back. New file names are never cached stale.
 const VERSION_PREFIX = 'content-calendar/v-';
 const KEEP_VERSIONS = 20;
+// Old versions are only cleaned up once 10 extra have piled up, so most saves skip that step.
+const CLEANUP_AFTER = KEEP_VERSIONS + 10;
+let lastVersions = [];
+let timings = [];
+const timed = async (name, fn) => { const start = Date.now(); try { return await fn(); } finally { timings.push(`${name};dur=${Date.now() - start}`); } };
 
 async function listVersions() {
   const blobs = [];
   let cursor;
   do {
-    const page = await list({ prefix: VERSION_PREFIX, cursor, limit: 1000 });
+    const page = await timed('list', () => list({ prefix: VERSION_PREFIX, cursor, limit: 1000 }));
     blobs.push(...page.blobs);
     cursor = page.hasMore ? page.cursor : undefined;
   } while (cursor);
@@ -92,8 +97,9 @@ async function listVersions() {
 
 async function readData() {
   const versions = await listVersions();
+  lastVersions = versions;
   if (versions.length) {
-    const response = await fetch(versions[0].url, { cache: 'no-store' });
+    const response = await timed('read', () => fetch(versions[0].url, { cache: 'no-store' }));
     return migrateData(await response.json());
   }
   const legacy = await list({ prefix: 'content-calendar/data.json', limit: 1 });
@@ -109,15 +115,19 @@ async function readData() {
 
 async function writeData(data) {
   const stamp = String(Date.now()).padStart(15, '0');
-  const result = await put(`${VERSION_PREFIX}${stamp}.json`, JSON.stringify(data), {
+  const result = await timed('write', () => put(`${VERSION_PREFIX}${stamp}.json`, JSON.stringify(data), {
     access: 'public',
     addRandomSuffix: false,
     contentType: 'application/json'
-  });
-  try {
-    const old = (await listVersions()).slice(KEEP_VERSIONS).map(blob => blob.url);
-    if (old.length) await del(old);
-  } catch {}
+  }));
+  // Reuse the list from readData() instead of listing again; the new file is now the newest.
+  if (lastVersions.length + 1 > CLEANUP_AFTER) {
+    try {
+      const old = lastVersions.slice(KEEP_VERSIONS - 1).map(blob => blob.url);
+      if (old.length) await timed('cleanup', () => del(old));
+      lastVersions = [];
+    } catch {}
+  }
   return result;
 }
 
@@ -150,6 +160,9 @@ function validate(body) {
 }
 
 export default async function handler(req, res) {
+  timings = [];
+  const originalJson = res.json.bind(res);
+  res.json = body => { res.setHeader('Server-Timing', timings.join(', ')); return originalJson(body); };
   try {
     if (req.method === 'GET') return res.status(200).json(await readData());
     if (!['POST', 'PUT', 'DELETE'].includes(req.method)) return res.status(405).json({ error: 'Method not allowed' });
