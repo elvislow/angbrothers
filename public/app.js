@@ -27,15 +27,16 @@ function restoreForm(body, isEdit) {
 $("#deleteContent").onclick = () => {
   const id = form.elements.id.value;
   if (!confirm("Delete this content plan? This cannot be undone.")) return;
-  const backup = data.contents.slice();
+  const backup = data.contents.filter(item => String(item.id) === String(id));
   data.contents = data.contents.filter(item => String(item.id) !== String(id));
   dialog.close(), render(), notice("Deleting…");
   queueSave(async () => {
     try {
       await send("DELETE", { resource: "content", id });
-      notice("Content deleted and shared.");
+      data.contents = data.contents.filter(item => String(item.id) !== String(id));
+      render(), notice("Content deleted and shared.");
     } catch (error) {
-      data.contents = backup, render(), notice(`Could not delete: ${error.message}`, "error");
+      data.contents.push(...backup), render(), notice(`Could not delete: ${error.message}`, "error");
     }
   });
 };
@@ -56,7 +57,8 @@ form.onsubmit = event => {
     try {
       const saved = await send(isEdit ? "PUT" : "POST", body);
       const i = data.contents.findIndex(item => String(item.id) === String(saved.id));
-      i >= 0 ? (data.contents[i] = saved) : data.contents.push(saved);
+      // If the item was deleted while this save was running, don't bring it back.
+      if (i >= 0) data.contents[i] = saved;
       render(), notice(isEdit ? "Content updated and shared." : "Content saved and shared.");
     } catch (error) {
       const i = data.contents.findIndex(item => String(item.id) === String(local.id));
