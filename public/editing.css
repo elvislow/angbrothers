@@ -102,3 +102,6 @@ legend { margin-bottom: 8px; font-weight: 700; }
 .status.draft { background: #fbe4e4; color: #b3191f; }
 .event.post.post-scheduled { background: #fdebd8; color: #9a4a06; border-color: #e07a1f; }
 .legend .orange { background: #e07a1f; }
+
+/* Lock buttons while saving so they can't be pressed twice */
+button:disabled { opacity: .6; cursor: wait; }
