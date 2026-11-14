@@ -188,8 +188,11 @@ export default async function handler(req, res) {
       content = contentFromBody(body, data.contents[index]);
       data.contents[index] = content;
     } else {
-      content = contentFromBody(body);
-      data.contents.push(content);
+      // The page now picks the id itself so it can show the new item before the server answers.
+      const clientId = /^\d+$/.test(String(body.id || '')) ? { id: Number(body.id) } : {};
+      content = contentFromBody(body, clientId);
+      const existing = data.contents.findIndex(item => String(item.id) === String(content.id));
+      if (existing >= 0) data.contents[existing] = content; else data.contents.push(content);
     }
 
     await writeData(data);
